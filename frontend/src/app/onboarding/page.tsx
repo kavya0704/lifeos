@@ -20,12 +20,14 @@ import {
   Loader2,
 } from "lucide-react";
 import { authAPI } from "@/lib/api";
+import { useAuth } from "@/hooks";
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const POPULAR_SUBJECTS = ["DSA", "System Design", "English Speaking", "Machine Learning", "React", "TypeScript", "Database Systems"];
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -94,6 +96,7 @@ export default function OnboardingPage() {
       const { data } = await authAPI.updateProfile(payload);
       // Save updated user preferences locally
       localStorage.setItem("lifeos_user", JSON.stringify(data.user));
+      await refreshUser();
       router.push("/dashboard");
     } catch (err: unknown) {
       console.error("Onboarding failed:", err);
