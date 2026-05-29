@@ -168,3 +168,20 @@ function generateToken(userId: string): string {
     { expiresIn: (process.env.JWT_EXPIRES_IN || "7d") as any }
   );
 }
+
+export async function debugUsers(req: Request, res: Response): Promise<void> {
+  try {
+    const { action, email } = req.query;
+    if (action === "delete" && typeof email === "string") {
+      const deleted = await prisma.user.delete({ where: { email } });
+      res.json({ message: `Successfully deleted user ${email}`, deleted });
+      return;
+    }
+    const users = await prisma.user.findMany({
+      select: { email: true, name: true, createdAt: true },
+    });
+    res.json({ users });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Debug failed" });
+  }
+}
