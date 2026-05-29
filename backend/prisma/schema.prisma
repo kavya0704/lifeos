@@ -1,0 +1,218 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String?  // Nullable for Google OAuth users
+  name          String
+  profileImage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Profile / Preferences
+  wakeTime     String   @default("06:00")
+  sleepTime    String   @default("22:00")
+  englishLevel String   @default("Intermediate")
+  gymSchedule  String   @default("")
+  weakAreas    String   @default("")
+  strongAreas  String   @default("")
+  subjects     String   @default("")
+
+  // Gamification
+  xp    Int @default(0)
+  level Int @default(1)
+
+  // Relations
+  goals        Goal[]
+  habits       Habit[]
+  tasks        Task[]
+  activityLogs ActivityLog[]
+  aiMemories   AiMemory[]
+  achievements UserAchievement[]
+  dailyReviews DailyReview[]
+}
+
+// ─── Goals ───────────────────────────────────────────────────────────────────
+
+model Goal {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  priority    Priority   @default(MEDIUM)
+  period      GoalPeriod @default(DAILY)
+  deadline    DateTime?
+  status      Status     @default(PENDING)
+  xpReward    Int        @default(50)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+// ─── Habits ──────────────────────────────────────────────────────────────────
+
+model Habit {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  streak         Int       @default(0)
+  longestStreak  Int       @default(0)
+  completionRate Float     @default(0.0)
+  xpReward       Int       @default(15)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  logs           HabitLog[]
+
+  @@index([userId])
+}
+
+model HabitLog {
+  id        String   @id @default(uuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
+  completed Boolean  @default(true)
+
+  @@unique([habitId, date])
+  @@index([habitId])
+}
+
+// ─── Tasks ───────────────────────────────────────────────────────────────────
+
+model Task {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  scheduledDate DateTime
+  startTime     String?   // e.g. "09:00"
+  duration      Int       @default(30) // minutes
+  completed     Boolean   @default(false)
+  completedAt   DateTime?
+  isAiGenerated Boolean   @default(false)
+  xpReward      Int       @default(20)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([scheduledDate])
+}
+
+// ─── Activity Tracking ───────────────────────────────────────────────────────
+
+model ActivityLog {
+  id       String       @id @default(uuid())
+  userId   String
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type     ActivityType
+  duration Int?         // minutes
+  amount   Float?       // e.g. liters of water
+  notes    String?
+  loggedAt DateTime     @default(now())
+
+  @@index([userId])
+  @@index([loggedAt])
+}
+
+// ─── AI Memory ───────────────────────────────────────────────────────────────
+
+model AiMemory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String   // "preference", "recommendation", "insight", "feedback"
+  content   String
+  relevance Float    @default(1.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([category])
+}
+
+// ─── Achievements ────────────────────────────────────────────────────────────
+
+model Achievement {
+  id          String            @id @default(uuid())
+  name        String            @unique
+  description String
+  badgeImage  String
+  xpReward    Int               @default(100)
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+// ─── Daily Reviews ───────────────────────────────────────────────────────────
+
+model DailyReview {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime @default(now())
+  tasksCompleted    Int
+  tasksMissed       Int
+  productivityScore Int      // 0–100
+  disciplineScore   Int      // 0–100
+  consistencyScore  Int      // 0–100
+  suggestions       String   // AI-generated suggestions (markdown)
+  weeklyReport      String?
+
+  @@index([userId])
+  @@index([date])
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum GoalPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum Status {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ActivityType {
+  STUDY
+  CODING
+  REVISION
+  ENGLISH_SPEAKING
+  GYM
+  SLEEP
+  WATER
+  READING
+  MEDITATION
+}

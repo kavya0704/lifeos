@@ -1,0 +1,13 @@
+packages:
+  - 'backend'
+  - 'frontend'
+allowBuilds:
+  '@prisma/client': true
+  '@prisma/engines': true
+  esbuild: true
+  msw: true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - shadcn@4.8.1
