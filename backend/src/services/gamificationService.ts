@@ -103,7 +103,7 @@ export class GamificationService {
         where: { userId },
         select: { achievementId: true },
       });
-      const unlockedIds = new Set(unlocked.map((ua) => ua.achievementId));
+      const unlockedIds = new Set(unlocked.map((ua: { achievementId: string }) => ua.achievementId));
 
       // 1. Check 7 Day Study Streak
       if (!unlockedIds.has("study_streak_7")) {
@@ -116,7 +116,7 @@ export class GamificationService {
           orderBy: { loggedAt: "asc" },
         });
 
-        if (this.hasConsecutiveDaysStreak(studyLogs.map(l => l.loggedAt), 7)) {
+        if (this.hasConsecutiveDaysStreak(studyLogs.map((l: { loggedAt: Date }) => l.loggedAt), 7)) {
           await this.unlockAchievement(userId, "study_streak_7");
           newlyUnlocked.push("7 Day Study Streak");
         }
@@ -133,7 +133,7 @@ export class GamificationService {
           orderBy: { loggedAt: "asc" },
         });
 
-        if (this.hasConsecutiveDaysStreak(englishLogs.map(l => l.loggedAt), 30)) {
+        if (this.hasConsecutiveDaysStreak(englishLogs.map((l: { loggedAt: Date }) => l.loggedAt), 30)) {
           await this.unlockAchievement(userId, "english_streak_30");
           newlyUnlocked.push("30 Day English Streak");
         }
@@ -288,4 +288,3 @@ export class GamificationService {
 }
 
 export const gamificationService = GamificationService;
-
