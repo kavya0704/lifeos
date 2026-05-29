@@ -23,10 +23,10 @@ export async function getAchievements(req: AuthRequest, res: Response): Promise<
     });
 
     const unlockedMap = new Map(
-      userAchievements.map((ua) => [ua.achievementId, ua.unlockedAt])
+      userAchievements.map((ua: { achievementId: string; unlockedAt: Date | null }) => [ua.achievementId, ua.unlockedAt])
     );
 
-    const achievements = allAchievements.map((ach) => ({
+    const achievements = allAchievements.map((ach: { id: string; name: string; description: string; badgeImage: string; xpReward: number }) => ({
       id: ach.id,
       name: ach.name,
       description: ach.description,
