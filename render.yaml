@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: lifeos-api
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: pnpm install && pnpm prisma:generate && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        value: file:/opt/render/project/src/backend/prisma/dev.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        value: https://frontend-psi-livid-24.vercel.app
