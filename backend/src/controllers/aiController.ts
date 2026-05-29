@@ -23,7 +23,7 @@ function extractAndParseJSON(text: string) {
   return JSON.parse(jsonText);
 }
 
-// ─── Chat With AI Coach ───────────────────────────────────────────────────────
+// ─── Chat With AI Coach ──────────────────────────────────────────────────────
 
 export async function chatWithCoach(req: AuthRequest, res: Response): Promise<void> {
   try {
@@ -75,11 +75,11 @@ Here is their profile:
 - Weak Areas to Improve: ${user.weakAreas}
 - Strong Areas: ${user.strongAreas}
 - Gym Schedule Days: ${user.gymSchedule}
-- Active Goals: ${user.goals.map((g) => g.title).join(", ") || "None"}
-- Tracked Habits: ${user.habits.map((h) => h.name).join(", ") || "None"}
+- Active Goals: ${user.goals.map((g: { title: string }) => g.title).join(", ") || "None"}
+- Tracked Habits: ${user.habits.map((h: { name: string }) => h.name).join(", ") || "None"}
 
 Here is their current schedule/tasks for today:
-${todayTasks.map(t => `- [ID: ${t.id}] ${t.startTime || "No Time"} - ${t.title} (${t.duration} mins) [${t.completed ? "Completed" : "Pending"}]`).join("\n") || "No tasks scheduled for today"}
+${todayTasks.map((t: { id: string; startTime: string | null; title: string; duration: number; completed: boolean }) => `- [ID: ${t.id}] ${t.startTime || "No Time"} - ${t.title} (${t.duration} mins) [${t.completed ? "Completed" : "Pending"}]`).join("\n") || "No tasks scheduled for today"}
 
 You can interactively modify the user's schedule if they ask you to add, reschedule, clear, update, or remove tasks.
 You MUST respond with a single, valid JSON object containing exactly two keys:
@@ -210,16 +210,16 @@ export async function generateSchedule(req: AuthRequest, res: Response): Promise
       select: { title: true },
     });
 
-    const parsedSubjects = user.subjects ? user.subjects.split(",").map(s => s.trim()) : [];
-    const parsedGym = user.gymSchedule ? user.gymSchedule.split(",").map(g => g.trim()) : [];
+    const parsedSubjects = user.subjects ? user.subjects.split(",").map((s: string) => s.trim()) : [];
+    const parsedGym = user.gymSchedule ? user.gymSchedule.split(",").map((g: string) => g.trim()) : [];
 
     const scheduleResponse = await groqService.generateDailySchedule({
       userName: user.name,
       wakeTime: user.wakeTime,
       sleepTime: user.sleepTime,
       subjects: parsedSubjects,
-      unfinishedTasks: unfinishedTasks.map((t) => t.title),
-      goals: goals.map((g) => g.title),
+      unfinishedTasks: unfinishedTasks.map((t: { title: string }) => t.title),
+      goals: goals.map((g: { title: string }) => g.title),
       gymSchedule: parsedGym,
       todayDay,
       customDescription: description,
@@ -307,8 +307,8 @@ export async function generateDailyReview(req: AuthRequest, res: Response): Prom
       return endTime < new Date();
     };
 
-    const tasksCompleted = tasks.filter((t) => t.completed).length;
-    const tasksMissed = tasks.filter((t) => isTaskMissed(t)).length;
+    const tasksCompleted = tasks.filter((t: any) => t.completed).length;
+    const tasksMissed = tasks.filter((t: any) => isTaskMissed(t)).length;
 
     // 2. Gathers activities logged
     const activities = await prisma.activityLog.findMany({
@@ -319,7 +319,7 @@ export async function generateDailyReview(req: AuthRequest, res: Response): Prom
     });
 
     const summaryMap: Record<string, number> = {};
-    activities.forEach((a) => {
+    activities.forEach((a: { duration: number | null; type: string }) => {
       if (a.duration) {
         summaryMap[a.type] = (summaryMap[a.type] || 0) + a.duration;
       }
@@ -333,7 +333,7 @@ export async function generateDailyReview(req: AuthRequest, res: Response): Prom
       where: { userId: req.userId },
     });
     const habitStreaks = habits
-      .map((h) => `${h.name} (Streak: ${h.streak}d, Longest: ${h.longestStreak}d)`)
+      .map((h: { name: string; streak: number; longestStreak: number }) => `${h.name} (Streak: ${h.streak}d, Longest: ${h.longestStreak}d)`)
       .join(", ") || "No habits monitored.";
 
     // Query Groq SDK
