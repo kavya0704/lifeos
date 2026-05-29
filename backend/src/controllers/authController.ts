@@ -63,12 +63,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     const token = generateToken(user.id);
 
     res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        profileImage: user.profileImage,
-      },
+      user: formatUserResponse(user),
       token,
     });
   } catch (error) {
